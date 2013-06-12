@@ -14,28 +14,109 @@
 #define PORT 3550 /* El puerto que será abierto */
 #define BACKLOG 2 /* El número de conexiones permitidas */
 
+int  search(int msgsock, char* Buffer,int size){
+	int a=0;
+	char rfc[500];	
+	char line[1024];	
+	char rfc2[1024];
+	int retval=0;
+	FILE *file;
+	file = fopen("loans.txt", "r");
+	
+	for(a=0;a<(strlen(Buffer)-1);a++)
+		rfc[a]=Buffer[a];
+		
+	//size = strlen(rfc);
+	//printf("\n%d : %s\n",size,rfc);
+	int b=0;
+	if (file) {	
+		printf("\n\n\n");
+		while(fgets(line, sizeof(line), file)) 
+		{
+			
+			if (strstr(line,rfc)) 
+			{
+				printf("%s", line);	
+				for(a=0;a<=strlen(line);a++){
+					rfc2[b]=line[a];				
+					b++;				
+				}				
+			}								
+		}
+	
+		rfc2[b] = '?';
+		//int ss = sizeof(rfc2);
+		//printf("%d",ss);
+
+		int sizze=0;
+		for(a=0;a<sizeof(rfc2);a++){
+			if(rfc2[a]=='?')
+				sizze=a-1;
+		}
+		
+		//retval = send(msgsock,rfc2,sizeof(rfc2),0);
+		retval = send(msgsock,rfc2,sizze,0);
+		printf("\n\n\n");
+		fclose(file);
+	}
+	return retval;
+ }
+ 
+
 void doprocessing (int sock)
 {
     int n;
-    char buffer[256];
+	int x=0, pipe = 0;
+    char buffer[256],buffer2[] = "ROMS260389JSAULO1", line[100];
+	char c;
+	FILE *file;
+	file = fopen("loans.txt", "r");
+	//File *file;
+	//file = fopen("loans.txt","r");
 
     memset(&(buffer), '0', 256);
     int recvMsgSize;
     
     /* Receive message from client */
     if ((recvMsgSize = recv(sock, buffer, 256, 0)) < 0)
-        perror("ERROR reading to socket");
+        perror("ERROR reading to socket-");
 
     /* Send received string and receive again until end of transmission */
     while (recvMsgSize > 0)      /* zero indicates end of transmission */
     {
+		if (socket_type != SOCK_DGRAM){
+			retval = search(msgsock,Buffer, sizeof(Buffer));
+		}
+        else{			
+            retval = sendto(msgsock, Buffer, sizeof(Buffer), 0, (struct sockaddr *)&from, fromlen);			
+		}
         /* Echo message back to client */
-        if (send(sock, buffer, recvMsgSize, 0) != recvMsgSize)
-            perror("ERROR writing to socket");
+		/*if (strstr(line,buffer2)) 
+		{
+			
+			if (send(sock, line, strlen(line), 0) != recvMsgSize){
+				printf("\nEntro aqui\n");
+				
+					printf("\nBuffer: %s\n",buffer);
+					printf("\nLine: %s\n",line);
+					printf("Buffer2: %s\n",buffer2);
+						if (strstr(line,buffer2)) 
+						{
+							printf("\n%s", line);
+							if (send(sock, line, 100, 0) != 0 || send(sock, line, strlen(line), 0) == 0)
+								printf("\nHere\n\n");
+						}			
+					//}
+				//}
+			}
+		}*/
+		//if (send(sock, line, strlen(line), 0) != recvMsgSize)
+		
+			//perror("ERROR writing to socket");
 
         /* See if there is more data to receive */
-        if ((recvMsgSize = recv(sock, buffer, 256, 0)) < 0)
-            perror("ERROR reading to socket");
+        if ((recvMsgSize = recv(sock, buffer, 256, 0)) > 0)
+            perror("ERROR reading to socket+");
     }
 
     closesocket(sock);    /* Close client socket */
@@ -122,11 +203,12 @@ int main()
          exit(-1);
       }
 
-      printf("Se obtuvo una conexión desde %s\n", inet_ntoa(client.sin_addr) );
+      printf("Se obtuvo una conexion desde %s\n", inet_ntoa(client.sin_addr) );
       /* que mostrará la IP del cliente */
 
-      send(fd2,"Bienvenido a mi servidor.\n",22,0);
+      send(fd2,"Bienvenido a mi servidor.\n",26,0);
       /* que enviará el mensaje de bienvenida al cliente */
+	  
       
       doprocessing(fd2);
 
